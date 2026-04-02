@@ -99,40 +99,63 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<script type="module">
+    // 1. Agregamos getAuth y GoogleAuthProvider a las importaciones
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // CONFIGURACIÓN FIREBASE (Copiada de tu chat.html)
-        const firebaseConfig = {
-            apiKey: "AIzaSyA7FUrAK478GwlfGg-GTU15G683zQ3rWU0",
-            authDomain: "mapa-comarca.firebaseapp.com",
-            projectId: "mapa-comarca",
-            storageBucket: "mapa-comarca.firebasestorage.app",
-            messagingSenderId: "369057855767",
-            appId: "1:369057855767:web:68fa4a6a85e811dc149f52"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyA7FUrAK478GwlfGg-GTU15G683zQ3rWU0",
+        authDomain: "mapa-comarca.firebaseapp.com",
+        projectId: "mapa-comarca",
+        storageBucket: "mapa-comarca.firebasestorage.app",
+        messagingSenderId: "369057855767",
+        appId: "1:369057855767:web:68fa4a6a85e811dc149f52"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app); // Inicializamos Auth
+    const provider = new GoogleAuthProvider(); // Proveedor de Google
 
-        // MAPA DE FONDO (Opcional, solo estético)
-        const map = L.map('map-bg', { zoomControl: false, attributionControl: false }).setView([-41.9667, -71.5333], 14);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+    // MAPA DE FONDO
+    const map = L.map('map-bg', { zoomControl: false, attributionControl: false }).setView([-41.9667, -71.5333], 14);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
-        // IDENTIDAD (Persistencia entre páginas)
-        const miNombre = localStorage.getItem('chat_user_name') || "Invitado";
-        document.getElementById('user-tag').innerText = miNombre.toUpperCase();
+    // --- LÓGICA DE USUARIO (PASO 1) ---
+    const userTag = document.getElementById('user-tag');
 
-        // LOGICA DE FEED: Muestra el último mensaje del chat en el Dashboard
-        const q = query(collection(db, "mensajes"), orderBy("tiempo", "desc"), limit(1));
-        onSnapshot(q, (snapshot) => {
-            const feed = document.getElementById('feed-mensajes');
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                feed.innerHTML = `<strong>ÚLTIMO AVISO:</strong> ${data.nombre}: ${data.texto}`;
-            });
+    // Escuchar si el usuario está logueado o no
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            userTag.innerText = user.displayName.toUpperCase();
+            localStorage.setItem('chat_user_name', user.displayName);
+        } else {
+            userTag.innerText = "CLIC PARA ENTRAR";
+        }
+    });
+
+    // Función para iniciar sesión al tocar el nombre
+    userTag.style.cursor = "pointer";
+    userTag.onclick = async () => {
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error("Error al entrar:", error);
+            alert("No se pudo iniciar sesión. Revisá si activaste Google Auth en la consola de Firebase.");
+        }
+    };
+
+    // LOGICA DE FEED
+    const q = query(collection(db, "mensajes"), orderBy("tiempo", "desc"), limit(1));
+    onSnapshot(q, (snapshot) => {
+        const feed = document.getElementById('feed-mensajes');
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            feed.innerHTML = `<strong>ÚLTIMO AVISO:</strong> ${data.nombre}: ${data.texto}`;
         });
-    </script>
+    });
+</script>
 </body>
 </html>
