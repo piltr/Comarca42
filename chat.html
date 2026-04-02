@@ -22,7 +22,7 @@
             display: flex; 
             flex-direction: column; 
             background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
-                        url('El-Bolson-Ph_-M.-Luz-Cardozo.jpg'); /* Asegúrate de tener esta imagen o cambiar la URL */
+                        url('El-Bolson-Ph_-M.-Luz-Cardozo.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -59,30 +59,8 @@
             border-radius: 15px;
             font-family: 'Poppins';
             font-size: 12px;
-            cursor: pointer;
             font-weight: 600;
         }
-
-        /* MENÚ DESPLEGABLE DE PERFIL */
-        .menu-desplegable {
-            position: absolute;
-            top: 50px;
-            right: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 2000;
-            width: 180px;
-        }
-        .menu-desplegable.active { display: flex; }
-        .menu-desplegable label { font-size: 10px; color: #666; font-weight: 800; text-transform: uppercase; }
-        .menu-desplegable input { padding: 8px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; outline: none; }
-        .menu-desplegable button { background: var(--acento); color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer; font-weight: 600; }
         
         #chat-messages { 
             flex-grow: 1; 
@@ -156,13 +134,8 @@
     <header>
         <a href="index.html" class="btn-volver">⇠ MAPA</a>
         <h3 style="margin:0; font-size: 13px; letter-spacing: 1px;">🏔️ LA COMARCA</h3>
-        <div style="position: relative;">
-            <button class="btn-perfil" onclick="toggleMenu()">👤 <span id="display-name">Perfil</span></button>
-            <div id="menu-usuario" class="menu-desplegable">
-                <label>Tu Nombre:</label>
-                <input type="text" id="input-nombre" maxlength="15">
-                <button onclick="guardarNombre()">Guardar</button>
-            </div>
+        <div>
+            <div class="btn-perfil">👤 <span id="display-name">...</span></div>
         </div>
     </header>
 
@@ -183,6 +156,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA7FUrAK478GwlfGg-GTU15G683zQ3rWU0",
@@ -195,39 +169,25 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
         const colRef = collection(db, "mensajes");
 
-        // --- GESTIÓN DE IDENTIDAD ---
-        if (!localStorage.getItem('chat_user_id')) {
-            localStorage.setItem('chat_user_id', Math.random().toString(36).substring(7));
-        }
-        const miId = localStorage.getItem('chat_user_id');
+        let miNombre = "Invitado";
+        let miId = null;
 
-        if (!localStorage.getItem('chat_user_name')) {
-            const num = Math.floor(Math.random() * 900) + 100;
-            localStorage.setItem('chat_user_name', `Golondrina${num}`);
-        }
-        let miNombre = localStorage.getItem('chat_user_name');
-
-        // UI inicial de identidad
-        document.getElementById('display-name').innerText = miNombre;
-        document.getElementById('input-nombre').value = miNombre;
-
-        window.toggleMenu = () => document.getElementById('menu-usuario').classList.toggle('active');
-
-        window.guardarNombre = () => {
-            const nuevo = document.getElementById('input-nombre').value.trim();
-            if (nuevo) {
-                miNombre = nuevo;
-                localStorage.setItem('chat_user_name', nuevo);
-                document.getElementById('display-name').innerText = nuevo;
-                toggleMenu();
+        // Verificar identidad real de Google
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                miNombre = user.displayName;
+                miId = user.uid;
+                document.getElementById('display-name').innerText = miNombre.toUpperCase();
+            } else {
+                // Si no está logueado, vuelve al mapa
+                window.location.href = "index.html";
             }
-        };
+        });
 
-        // --- LÓGICA DE MENSAJERÍA ---
         let estadoActual = "ninguno";
-
         window.setEstado = (nuevo, el) => {
             estadoActual = nuevo;
             document.querySelectorAll('.opcion-estado').forEach(opt => opt.classList.remove('active'));
@@ -237,11 +197,12 @@
         window.enviarMensaje = async () => {
             const input = document.getElementById('chat-input');
             const texto = input.value.trim();
-            if (texto !== "") {
+            if (texto !== "" && miId) {
+                const contenido = texto;
                 input.value = "";
                 try {
                     await addDoc(colRef, {
-                        texto: texto,
+                        texto: contenido,
                         nombre: miNombre,
                         id: miId,
                         estado: estadoActual,
@@ -259,20 +220,18 @@
             contenedor.innerHTML = "";
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                const div = document.createElement('div');
                 const esMio = data.id === miId;
-                const estadoDoc = data.estado || 'ninguno';
-                
-                div.className = `msg ${estadoDoc} ${esMio ? 'user' : 'other'}`;
+                const div = document.createElement('div');
+                div.className = `msg ${data.estado || 'ninguno'} ${esMio ? 'user' : 'other'}`;
                 
                 const labels = { "espera": "⏱️ ESPERANDO", "viaje": "🚌 EN VIAJE", "ninguno": "" };
                 const hora = data.tiempo ? new Date(data.tiempo.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '...';
                 
                 div.innerHTML = `
-                    <div class="msg-nombre">${esMio ? 'Tú' : (data.nombre || 'Anónimo')}</div>
+                    <div class="msg-nombre">${esMio ? 'Tú' : (data.nombre || 'Vecino')}</div>
                     <div style="font-weight: 500; font-size: 14px;">${data.texto}</div>
                     <div class="meta-info">
-                        ${estadoDoc !== 'ninguno' ? `<span>${labels[estadoDoc]}</span>` : '<span></span>'}
+                        ${data.estado && data.estado !== 'ninguno' ? `<span>${labels[data.estado]}</span>` : '<span></span>'}
                         <span>${hora}</span>
                     </div>
                 `;
