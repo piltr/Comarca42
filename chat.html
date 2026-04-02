@@ -7,135 +7,131 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --primario: #2c3e50; 
-            --acento: #e67e22; 
-            --espera: rgba(241, 196, 15, 0.85); 
-            --viaje: rgba(46, 204, 113, 0.85);  
-            --normal-user: rgba(255, 255, 255, 0.7); 
-            --normal-other: rgba(44, 62, 80, 0.7);  
+            --glass: rgba(255, 255, 255, 0.15);
+            --blur: blur(20px);
+            --border: 1px solid rgba(255, 255, 255, 0.2);
+            --acento: #e67e22;
+            --espera: #f1c40f; 
+            --viaje: #2ecc71;
         }
 
         body { 
-            font-family: 'Poppins', sans-serif; 
-            margin: 0; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
+            font-family: 'Poppins', sans-serif; margin: 0; height: 100vh; 
+            display: flex; flex-direction: column; 
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
                         url('El-Bolson-Ph_-M.-Luz-Cardozo.jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            overflow: hidden;
+            background-size: cover; background-position: center; background-attachment: fixed; 
+            color: white; overflow: hidden;
         }
         
+        /* Header Estilo Perfil */
         header { 
-            background: rgba(0, 0, 0, 0.5); 
-            backdrop-filter: blur(15px);
-            color: white; 
-            padding: 10px 15px; 
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0, 0, 0, 0.3); backdrop-filter: var(--blur); 
+            padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;
+            z-index: 10; border-bottom: var(--border);
         }
 
         .btn-volver {
-            text-decoration: none;
-            color: white;
-            font-size: 12px;
-            font-weight: 600;
-            background: rgba(255,255,255,0.2);
-            padding: 5px 12px;
-            border-radius: 15px;
+            text-decoration: none; color: white; font-size: 12px; font-weight: 600;
+            background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px;
+            transition: 0.3s; border: var(--border);
         }
+        .btn-volver:hover { background: rgba(255,255,255,0.3); }
 
-        .btn-perfil {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-family: 'Poppins';
-            font-size: 12px;
-            font-weight: 600;
+        .user-pill {
+            background: var(--glass); padding: 6px 15px; border-radius: 25px;
+            font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 10px;
+            border: var(--border); backdrop-filter: var(--blur);
         }
         
         #chat-messages { 
-            flex-grow: 1; 
-            padding: 15px; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            scrollbar-width: none;
+            flex-grow: 1; padding: 20px; overflow-y: auto; 
+            display: flex; flex-direction: column; gap: 18px; scrollbar-width: none;
         }
         #chat-messages::-webkit-scrollbar { display: none; }
 
-        .msg { 
-            padding: 8px 14px; 
-            border-radius: 18px; 
-            max-width: 75%; 
-            backdrop-filter: blur(8px); 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
-            color: white;
-            position: relative;
-            line-height: 1.4;
-            animation: fadeIn 0.3s ease;
+        /* --- BURBUJAS ESTILO PROFILE CARD --- */
+        .msg-wrapper { display: flex; align-items: flex-end; gap: 12px; max-width: 85%; animation: fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .msg-wrapper.user { align-self: flex-end; flex-direction: row-reverse; }
+        .msg-wrapper.other { align-self: flex-start; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .chat-avatar {
+            width: 42px; height: 42px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0; border: 2px solid white;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            transition: 0.3s;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .msg-bubble { 
+            padding: 12px 18px; border-radius: 22px; backdrop-filter: var(--blur);
+            background: var(--glass); border: var(--border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative;
+        }
+        
+        /* Diferenciación sutil para el usuario actual */
+        .msg-wrapper.user .msg-bubble { 
+            background: rgba(255, 255, 255, 0.25); 
+            border-bottom-right-radius: 4px; 
+        }
+        .msg-wrapper.other .msg-bubble { 
+            border-bottom-left-radius: 4px; 
         }
 
-        .msg.user { align-self: flex-end; border-bottom-right-radius: 4px; }
-        .msg.other { align-self: flex-start; border-bottom-left-radius: 4px; }
-
-        .msg.ninguno.user { background: var(--normal-user); color: #1a1a1a; }
-        .msg.ninguno.other { background: var(--normal-other); }
-        .msg.espera { background: var(--espera); color: #000; align-self: center; max-width: 85%; }
-        .msg.viaje { background: var(--viaje); color: #fff; align-self: center; max-width: 85%; }
-
-        .msg-nombre { font-size: 10px; font-weight: 800; margin-bottom: 2px; opacity: 0.8; text-transform: uppercase; }
+        .msg-nombre { font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: block; letter-spacing: 0.5px; }
+        .msg-texto { font-size: 14px; font-weight: 400; line-height: 1.5; color: rgba(255,255,255,0.95); }
 
         .meta-info {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            font-size: 9px;
-            opacity: 0.7;
-            margin-top: 5px;
-            font-weight: 600;
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 15px; font-size: 9px; opacity: 0.6; margin-top: 8px; font-weight: 700;
         }
 
+        /* Indicadores de estado elegantes */
+        .status-tag { padding: 2px 8px; border-radius: 10px; background: rgba(0,0,0,0.3); }
+        .msg-bubble.espera { border-left: 4px solid var(--espera); }
+        .msg-bubble.viaje { border-left: 4px solid var(--viaje); }
+
+        /* --- AREA INFERIOR --- */
         .area-inferior {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255,255,255,0.2);
-            padding-bottom: env(safe-area-inset-bottom);
+            background: rgba(0, 0, 0, 0.3); backdrop-filter: var(--blur);
+            border-top: var(--border); padding-bottom: env(safe-area-inset-bottom);
         }
 
-        .selector-estado { display: flex; justify-content: center; gap: 8px; padding: 10px; }
+        .selector-estado { display: flex; justify-content: center; gap: 10px; padding: 12px; }
         .opcion-estado {
-            font-size: 10px; font-weight: 700; padding: 6px 14px; border-radius: 20px;
-            cursor: pointer; border: 1.5px solid rgba(255,255,255,0.3); color: white; background: rgba(0,0,0,0.3);
+            font-size: 10px; font-weight: 800; padding: 7px 16px; border-radius: 20px;
+            cursor: pointer; border: var(--border); color: white; background: rgba(255,255,255,0.1);
+            transition: 0.3s;
         }
-        .opcion-estado.active { background: white !important; color: black !important; }
+        .opcion-estado.active { background: white !important; color: black !important; transform: scale(1.05); }
 
-        .input-area { padding: 5px 15px 20px; display: flex; gap: 10px; }
-        #chat-input { flex-grow: 1; border: none; padding: 12px 20px; border-radius: 30px; outline: none; background: rgba(255, 255, 255, 0.9); font-size: 15px; }
-        .btn-send { background: var(--acento); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+        .input-area { padding: 5px 20px 25px; display: flex; gap: 12px; align-items: center; }
+        #chat-input { 
+            flex-grow: 1; border: var(--border); padding: 14px 22px; border-radius: 30px; 
+            outline: none; background: rgba(255, 255, 255, 0.1); color: white;
+            font-family: 'Poppins'; font-size: 15px; backdrop-filter: var(--blur);
+        }
+        #chat-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        .btn-send { 
+            background: var(--acento); color: white; border: none; 
+            width: 50px; height: 50px; border-radius: 50%; cursor: pointer; 
+            font-size: 22px; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 5px 15px rgba(230, 126, 34, 0.4); transition: 0.3s;
+        }
+        .btn-send:hover { transform: scale(1.1) rotate(-10deg); background: #f39c12; }
     </style>
 </head>
 <body>
 
     <header>
         <a href="index.html" class="btn-volver">⇠ MAPA</a>
-        <h3 style="margin:0; font-size: 13px; letter-spacing: 1px;">🏔️ LA COMARCA</h3>
-        <div>
-            <div class="btn-perfil">👤 <span id="display-name">...</span></div>
+        <h3 style="margin:0; font-size: 15px; font-weight: 800; letter-spacing: 1px;">🏔️ LA COMARCA</h3>
+        <div class="user-pill">
+            <span id="mi-emoji-header">👤</span>
+            <span id="display-name">...</span>
         </div>
     </header>
 
@@ -144,18 +140,18 @@
     <div class="area-inferior">
         <div class="selector-estado" id="selector-estado">
             <div class="opcion-estado active" onclick="setEstado('ninguno', this)">NORMAL</div>
-            <div class="opcion-estado" onclick="setEstado('espera', this)" style="border-color: #f1c40f;">ESPERANDO</div>
-            <div class="opcion-estado" onclick="setEstado('viaje', this)" style="border-color: #2ecc71;">EN VIAJE</div>
+            <div class="opcion-estado" onclick="setEstado('espera', this)" style="border-color: var(--espera);">ESPERANDO</div>
+            <div class="opcion-estado" onclick="setEstado('viaje', this)" style="border-color: var(--viaje);">EN VIAJE</div>
         </div>
         <div class="input-area">
             <input type="text" id="chat-input" placeholder="Escribe un mensaje..." autocomplete="off">
-            <button class="btn-send" onclick="enviarMensaje()">➤</button>
+            <button class="btn-send" id="btn-enviar">➤</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -174,15 +170,22 @@
 
         let miNombre = "Invitado";
         let miId = null;
+        let miEmoji = "👤";
+        let miColor = "#e67e22";
 
-        // Verificar identidad real de Google
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 miNombre = user.displayName;
                 miId = user.uid;
                 document.getElementById('display-name').innerText = miNombre.toUpperCase();
+
+                const userSnap = await getDoc(doc(db, "usuarios", user.uid));
+                if(userSnap.exists()){
+                    miEmoji = userSnap.data().emoji || "👤";
+                    miColor = userSnap.data().color || "#e67e22";
+                    document.getElementById('mi-emoji-header').innerText = miEmoji;
+                }
             } else {
-                // Si no está logueado, vuelve al mapa
                 window.location.href = "index.html";
             }
         });
@@ -198,20 +201,22 @@
             const input = document.getElementById('chat-input');
             const texto = input.value.trim();
             if (texto !== "" && miId) {
-                const contenido = texto;
                 input.value = "";
                 try {
                     await addDoc(colRef, {
-                        texto: contenido,
+                        texto: texto,
                         nombre: miNombre,
                         id: miId,
                         estado: estadoActual,
+                        emoji: miEmoji,
+                        color: miColor,
                         tiempo: serverTimestamp()
                     });
                 } catch (e) { console.error(e); }
             }
         };
 
+        document.getElementById('btn-enviar').onclick = enviarMensaje;
         document.getElementById('chat-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') enviarMensaje(); });
 
         const q = query(colRef, orderBy("tiempo", "asc"), limit(50));
@@ -221,21 +226,29 @@
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 const esMio = data.id === miId;
-                const div = document.createElement('div');
-                div.className = `msg ${data.estado || 'ninguno'} ${esMio ? 'user' : 'other'}`;
                 
+                const wrapper = document.createElement('div');
+                wrapper.className = `msg-wrapper ${esMio ? 'user' : 'other'}`;
+
                 const labels = { "espera": "⏱️ ESPERANDO", "viaje": "🚌 EN VIAJE", "ninguno": "" };
                 const hora = data.tiempo ? new Date(data.tiempo.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '...';
                 
-                div.innerHTML = `
-                    <div class="msg-nombre">${esMio ? 'Tú' : (data.nombre || 'Vecino')}</div>
-                    <div style="font-weight: 500; font-size: 14px;">${data.texto}</div>
-                    <div class="meta-info">
-                        ${data.estado && data.estado !== 'ninguno' ? `<span>${labels[data.estado]}</span>` : '<span></span>'}
-                        <span>${hora}</span>
+                wrapper.innerHTML = `
+                    <div class="chat-avatar" style="background: ${data.color || '#e67e22'}">
+                        ${data.emoji || '👤'}
+                    </div>
+                    <div class="msg-bubble ${data.estado || 'ninguno'}">
+                        <span class="msg-nombre" style="color: ${data.color || '#e67e22'}">
+                            ${esMio ? 'Tú' : (data.nombre || 'Vecino')}
+                        </span>
+                        <div class="msg-texto">${data.texto}</div>
+                        <div class="meta-info">
+                            ${data.estado && data.estado !== 'ninguno' ? `<span class="status-tag">${labels[data.estado]}</span>` : '<span></span>'}
+                            <span>${hora}</span>
+                        </div>
                     </div>
                 `;
-                contenedor.appendChild(div);
+                contenedor.appendChild(wrapper);
             });
             contenedor.scrollTop = contenedor.scrollHeight;
         });

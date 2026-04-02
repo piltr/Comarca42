@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
-            /* Estilo Glass de Colectivos */
             --glass: rgba(255, 255, 255, 0.15);
             --blur: blur(20px);
             --border: 1px solid rgba(255, 255, 255, 0.2);
@@ -20,7 +19,6 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            /* Fondo con la imagen del chat */
             background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
                         url('El-Bolson-Ph_-M.-Luz-Cardozo.jpg');
             background-size: cover;
@@ -30,7 +28,6 @@
             overflow: hidden;
         }
 
-        /* Header Estilo Vidrio */
         .header-main {
             padding: 15px 25px;
             display: flex;
@@ -42,7 +39,6 @@
             z-index: 1000;
         }
 
-        /* Contenedor principal para centrar contenido */
         .main-content {
             flex-grow: 1;
             display: flex;
@@ -52,10 +48,9 @@
             padding: 20px;
         }
 
-        /* Grilla de Servicios */
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* 2 columnas fijas para móviles se ve mejor */
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             width: 100%;
             max-width: 500px;
@@ -92,14 +87,12 @@
             letter-spacing: 1px;
         }
 
-        /* Destaque para Colectivos */
         .card-service.active-bus {
             background: var(--acento);
             border: none;
             box-shadow: 0 10px 20px rgba(230, 126, 34, 0.3);
         }
 
-        /* Feed de actividad inferior */
         .live-feed {
             width: 100%;
             max-width: 460px;
@@ -134,13 +127,13 @@
     <main class="main-content">
         <div class="services-grid">
             <a href="chat.html" class="card-service"><i>💬</i><span>Social</span></a>
-            <a href="#" class="card-service"><i>🛵</i><span>Delivery</span></a>
+            <a href="perfil.html" class="card-service"><i>👤</i><span>Perfil</span></a>
             <a href="#" class="card-service"><i>🛍️</i><span>Productos</span></a>
             <a href="colectivos.html" class="card-service active-bus">
                 <i>🚌</i><span>Colectivos</span>
             </a>
             <a href="#" class="card-service"><i>🚗</i><span>Viajes</span></a>
-            <a href="#" class="card-service"><i>🛠️</i><span>Servicios</span></a>
+            <a href="#" class="card-service"><i>🛵</i><span>Delivery</span></a>
         </div>
 
         <div class="live-feed" id="feed-mensajes">
@@ -182,7 +175,7 @@
                 await signInWithPopup(auth, provider);
             } catch (error) {
                 console.error(error);
-                alert("Error al conectar con Google.");
+                alert("Error al conectar con Google. Revisa si autorizaste el dominio en la consola.");
             }
         };
 
