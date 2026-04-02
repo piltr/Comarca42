@@ -5,157 +5,195 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>La Comarca - Hub de Servicios</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { 
-            --glass: rgba(255, 255, 255, 0.8);
-            --blur: blur(12px);
+            /* Estilo Glass de Colectivos */
+            --glass: rgba(255, 255, 255, 0.15);
+            --blur: blur(20px);
+            --border: 1px solid rgba(255, 255, 255, 0.2);
             --acento: #e67e22;
         }
 
         body { 
-            margin: 0; font-family: 'Poppins', sans-serif; 
-            background: #f0f2f5; overflow-x: hidden;
-        }
-
-        /* Fondo del Mapa suavizado para el fondo */
-        #map-bg { 
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-            z-index: -1; opacity: 0.6; filter: grayscale(30%);
+            margin: 0; 
+            font-family: 'Poppins', sans-serif; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            /* Fondo con la imagen del chat */
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+                        url('El-Bolson-Ph_-M.-Luz-Cardozo.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+            overflow: hidden;
         }
 
         /* Header Estilo Vidrio */
         .header-main {
-            padding: 20px;
+            padding: 15px 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: var(--glass);
+            background: rgba(0, 0, 0, 0.3);
             backdrop-filter: var(--blur);
-            border-bottom: 1px solid rgba(255,255,255,0.3);
-            position: sticky; top: 0; z-index: 1000;
+            border-bottom: var(--border);
+            z-index: 1000;
+        }
+
+        /* Contenedor principal para centrar contenido */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
 
         /* Grilla de Servicios */
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(2, 1fr); /* 2 columnas fijas para móviles se ve mejor */
             gap: 15px;
-            padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 500px;
         }
 
         .card-service {
             background: var(--glass);
             backdrop-filter: var(--blur);
-            padding: 20px;
-            border-radius: 24px;
+            padding: 25px 15px;
+            border-radius: 28px;
             text-align: center;
             text-decoration: none;
-            color: #2c3e50;
-            border: 1px solid rgba(255,255,255,0.4);
-            transition: transform 0.2s;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-        }
-
-        .card-service:active { transform: scale(0.95); }
-        .card-service i { font-size: 30px; display: block; margin-bottom: 10px; }
-        .card-service span { font-size: 13px; font-weight: 600; text-transform: uppercase; }
-
-        /* Notificaciones en tiempo real */
-        .live-feed {
-            margin: 0 20px;
-            padding: 15px;
-            background: rgba(0,0,0,0.7);
             color: white;
-            border-radius: 15px;
-            font-size: 12px;
+            border: var(--border);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
+
+        .card-service:active { transform: scale(0.95); background: rgba(255,255,255,0.3); }
+        
+        .card-service i { 
+            font-size: 32px; 
+            margin-bottom: 8px; 
+            font-style: normal;
+        }
+        
+        .card-service span { 
+            font-size: 12px; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+
+        /* Destaque para Colectivos */
+        .card-service.active-bus {
+            background: var(--acento);
+            border: none;
+            box-shadow: 0 10px 20px rgba(230, 126, 34, 0.3);
+        }
+
+        /* Feed de actividad inferior */
+        .live-feed {
+            width: 100%;
+            max-width: 460px;
+            margin-top: 30px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            font-size: 12px;
+            border: var(--border);
+            text-align: center;
+        }
+
+        #user-tag {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #user-tag:hover { background: rgba(255,255,255,0.3); }
     </style>
 </head>
 <body>
 
-    <div id="map-bg"></div>
-
     <header class="header-main">
-        <h2 style="margin:0; font-size: 18px;">🏔️ LA COMARCA</h2>
-        <div id="user-tag" style="font-size: 12px; font-weight: 800;"></div>
+        <h2 style="margin:0; font-size: 16px; letter-spacing: 2px;">🏔️ LA COMARCA</h2>
+        <div id="user-tag" style="font-size: 10px; font-weight: 800;">CARGANDO...</div>
     </header>
 
-    <div class="services-grid">
-        <a href="chat.html" class="card-service"><i>💬</i><span>Social</span></a>
-        <a href="#" class="card-service"><i>🛵</i><span>Delivery</span></a>
-        <a href="#" class="card-service"><i>🛍️</i><span>Productos</span></a>
-        <a href="colectivos.html" class="card-service" style="background: var(--acento); color: white;">
-            <i>🚌</i><span>Colectivos</span>
-        </a>
-        <a href="#" class="card-service"><i>🚗</i><span>Viajes</span></a>
-        <a href="#" class="card-service"><i>🛠️</i><span>Servicios</span></a>
-    </div>
+    <main class="main-content">
+        <div class="services-grid">
+            <a href="chat.html" class="card-service"><i>💬</i><span>Social</span></a>
+            <a href="#" class="card-service"><i>🛵</i><span>Delivery</span></a>
+            <a href="#" class="card-service"><i>🛍️</i><span>Productos</span></a>
+            <a href="colectivos.html" class="card-service active-bus">
+                <i>🚌</i><span>Colectivos</span>
+            </a>
+            <a href="#" class="card-service"><i>🚗</i><span>Viajes</span></a>
+            <a href="#" class="card-service"><i>🛠️</i><span>Servicios</span></a>
+        </div>
 
-    <div class="live-feed" id="feed-mensajes">
-        Cargando actividad reciente...
-    </div>
+        <div class="live-feed" id="feed-mensajes">
+            Buscando señales en el Paralelo 42...
+        </div>
+    </main>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module">
-    // 1. Agregamos getAuth y GoogleAuthProvider a las importaciones
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyA7FUrAK478GwlfGg-GTU15G683zQ3rWU0",
-        authDomain: "mapa-comarca.firebaseapp.com",
-        projectId: "mapa-comarca",
-        storageBucket: "mapa-comarca.firebasestorage.app",
-        messagingSenderId: "369057855767",
-        appId: "1:369057855767:web:68fa4a6a85e811dc149f52"
-    };
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7FUrAK478GwlfGg-GTU15G683zQ3rWU0",
+            authDomain: "mapa-comarca.firebaseapp.com",
+            projectId: "mapa-comarca",
+            storageBucket: "mapa-comarca.firebasestorage.app",
+            messagingSenderId: "369057855767",
+            appId: "1:369057855767:web:68fa4a6a85e811dc149f52"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app); // Inicializamos Auth
-    const provider = new GoogleAuthProvider(); // Proveedor de Google
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
 
-    // MAPA DE FONDO
-    const map = L.map('map-bg', { zoomControl: false, attributionControl: false }).setView([-41.9667, -71.5333], 14);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+        const userTag = document.getElementById('user-tag');
 
-    // --- LÓGICA DE USUARIO (PASO 1) ---
-    const userTag = document.getElementById('user-tag');
-
-    // Escuchar si el usuario está logueado o no
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            userTag.innerText = user.displayName.toUpperCase();
-            localStorage.setItem('chat_user_name', user.displayName);
-        } else {
-            userTag.innerText = "CLIC PARA ENTRAR";
-        }
-    });
-
-    // Función para iniciar sesión al tocar el nombre
-    userTag.style.cursor = "pointer";
-    userTag.onclick = async () => {
-        try {
-            await signInWithPopup(auth, provider);
-        } catch (error) {
-            console.error("Error al entrar:", error);
-            alert("No se pudo iniciar sesión. Revisá si activaste Google Auth en la consola de Firebase.");
-        }
-    };
-
-    // LOGICA DE FEED
-    const q = query(collection(db, "mensajes"), orderBy("tiempo", "desc"), limit(1));
-    onSnapshot(q, (snapshot) => {
-        const feed = document.getElementById('feed-mensajes');
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            feed.innerHTML = `<strong>ÚLTIMO AVISO:</strong> ${data.nombre}: ${data.texto}`;
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userTag.innerText = user.displayName.toUpperCase();
+            } else {
+                userTag.innerText = "INICIAR SESIÓN";
+            }
         });
-    });
-</script>
+
+        userTag.onclick = async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error(error);
+                alert("Error al conectar con Google.");
+            }
+        };
+
+        const q = query(collection(db, "mensajes"), orderBy("tiempo", "desc"), limit(1));
+        onSnapshot(q, (snapshot) => {
+            const feed = document.getElementById('feed-mensajes');
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                feed.innerHTML = `<span style="color: var(--acento)">ÚLTIMO AVISO:</span> ${data.nombre}: ${data.texto}`;
+            });
+        });
+    </script>
 </body>
 </html>
