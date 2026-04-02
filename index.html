@@ -1,0 +1,138 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Comarca - Hub de Servicios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root { 
+            --glass: rgba(255, 255, 255, 0.8);
+            --blur: blur(12px);
+            --acento: #e67e22;
+        }
+
+        body { 
+            margin: 0; font-family: 'Poppins', sans-serif; 
+            background: #f0f2f5; overflow-x: hidden;
+        }
+
+        /* Fondo del Mapa suavizado para el fondo */
+        #map-bg { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+            z-index: -1; opacity: 0.6; filter: grayscale(30%);
+        }
+
+        /* Header Estilo Vidrio */
+        .header-main {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            position: sticky; top: 0; z-index: 1000;
+        }
+
+        /* Grilla de Servicios */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card-service {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            padding: 20px;
+            border-radius: 24px;
+            text-align: center;
+            text-decoration: none;
+            color: #2c3e50;
+            border: 1px solid rgba(255,255,255,0.4);
+            transition: transform 0.2s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .card-service:active { transform: scale(0.95); }
+        .card-service i { font-size: 30px; display: block; margin-bottom: 10px; }
+        .card-service span { font-size: 13px; font-weight: 600; text-transform: uppercase; }
+
+        /* Notificaciones en tiempo real */
+        .live-feed {
+            margin: 0 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map-bg"></div>
+
+    <header class="header-main">
+        <h2 style="margin:0; font-size: 18px;">🏔️ LA COMARCA</h2>
+        <div id="user-tag" style="font-size: 12px; font-weight: 800;"></div>
+    </header>
+
+    <div class="services-grid">
+        <a href="chat.html" class="card-service"><i>💬</i><span>Social</span></a>
+        <a href="#" class="card-service"><i>🛵</i><span>Delivery</span></a>
+        <a href="#" class="card-service"><i>🛍️</i><span>Productos</span></a>
+        <a href="colectivos.html" class="card-service" style="background: var(--acento); color: white;">
+            <i>🚌</i><span>Colectivos</span>
+        </a>
+        <a href="#" class="card-service"><i>🚗</i><span>Viajes</span></a>
+        <a href="#" class="card-service"><i>🛠️</i><span>Servicios</span></a>
+    </div>
+
+    <div class="live-feed" id="feed-mensajes">
+        Cargando actividad reciente...
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // CONFIGURACIÓN FIREBASE (Copiada de tu chat.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7FUrAK478GwlfGg-GTU15G683zQ3rWU0",
+            authDomain: "mapa-comarca.firebaseapp.com",
+            projectId: "mapa-comarca",
+            storageBucket: "mapa-comarca.firebasestorage.app",
+            messagingSenderId: "369057855767",
+            appId: "1:369057855767:web:68fa4a6a85e811dc149f52"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // MAPA DE FONDO (Opcional, solo estético)
+        const map = L.map('map-bg', { zoomControl: false, attributionControl: false }).setView([-41.9667, -71.5333], 14);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+
+        // IDENTIDAD (Persistencia entre páginas)
+        const miNombre = localStorage.getItem('chat_user_name') || "Invitado";
+        document.getElementById('user-tag').innerText = miNombre.toUpperCase();
+
+        // LOGICA DE FEED: Muestra el último mensaje del chat en el Dashboard
+        const q = query(collection(db, "mensajes"), orderBy("tiempo", "desc"), limit(1));
+        onSnapshot(q, (snapshot) => {
+            const feed = document.getElementById('feed-mensajes');
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                feed.innerHTML = `<strong>ÚLTIMO AVISO:</strong> ${data.nombre}: ${data.texto}`;
+            });
+        });
+    </script>
+</body>
+</html>
