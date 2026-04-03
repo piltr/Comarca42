@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Eventos</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--gl:rgba(255,255,255,0.15);--bl:blur(10px);--ac:#e67e22;}
+body{margin:0;font-family:'Poppins',sans-serif;background:linear-gradient(rgba(0,0,0,.7),rgba(0,0,0,.7)),url('El-Bolson-Ph_-M.-Luz-Cardozo.jpg') center/cover fixed;color:#fff;}
+header{padding:15px;display:flex;justify-content:space-between;background:rgba(0,0,0,.3);backdrop-filter:var(--bl);}
+.g{background:var(--gl);backdrop-filter:var(--bl);border:1px solid rgba(255,255,255,.2);border-radius:15px;padding:15px;}
+main{padding:20px;max-width:500px;margin:auto;}
+.btn{background:var(--ac);border:none;color:#fff;padding:12px;border-radius:10px;width:100%;font-weight:bold;margin-top:10px;}
+input,textarea{width:100%;padding:10px;margin:5px 0;box-sizing:border-box;border-radius:5px;}
+#m{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);padding:20px;z-index:10;}
+</style></head>
+<body>
+<header><h2>🏔️ LA COMARCA</h2><div id="u_tag">CARGANDO...</div></header>
+<main>
+<a href="index.html" style="color:#fff;text-decoration:none;font-weight:bold">⬅ Volver</a>
+<div class="g" style="margin:15px 0">📅 <input type="date" id="c" style="width:85%;border:none;background:transparent;color:#fff;font-weight:bold"></div>
+<button class="btn" onclick="m.style.display='block'">+ CARGAR EVENTO</button>
+<div id="l" style="margin-top:20px"></div>
+</main>
+<div id="m"><div class="g" style="max-width:500px;margin:50px auto">
+<h3 style="margin-top:0">Nuevo Evento</h3>
+<input id="t" placeholder="Título"><input type="date" id="f">
+<input id="lg" placeholder="Lugar"><textarea id="d" placeholder="Detalles"></textarea>
+<button class="btn" id="b">Publicar</button>
+<button class="btn" style="background:#555" onclick="m.style.display='none'">Cancelar</button>
+</div></div>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import{getFirestore,collection,addDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+const db=getFirestore(initializeApp({apiKey:"AIzaSyA7FUrAK478GwlfGg-GTU15G683zQ3rWU0",projectId:"mapa-comarca",appId:"1:369057855767:web:68fa4a6a85e811dc149f52"}));
+const auth=getAuth(); let u,ev=[];
+onAuthStateChanged(auth,x=>{u=x;u_tag.innerText=u?u.displayName.toUpperCase():"SESIÓN";});
+onSnapshot(collection(db,"ev"),s=>{ev=[];s.forEach(x=>ev.push(x.data()));r();});
+c.valueAsDate=new Date(); c.onchange=r;
+function r(){
+  let h='', fil=ev.filter(e=>e.f===c.value);
+  fil.forEach(e=>{h+=`<div class="g" style="margin-bottom:10px"><h3 style="margin:0;color:var(--ac)">${e.t}</h3><small>📍 ${e.lg} | 👤 ${e.a}</small><p style="margin:5px 0;font-size:12px">${e.d}</p></div>`;});
+  l.innerHTML=h||'<p style="text-align:center">No hay eventos este día.</p>';
+}
+b.onclick=async()=>{
+  if(!u)return alert("Iniciá sesión primero.");
+  if(t.value&&f.value){await addDoc(collection(db,"ev"),{t:t.value,f:f.value,lg:lg.value,d:d.value,a:u.displayName});m.style.display='none';}
+};
+</script></body></html>
