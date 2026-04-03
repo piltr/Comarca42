@@ -128,7 +128,7 @@
         <div class="services-grid">
             <a href="chat.html" class="card-service"><i>💬</i><span>Social</span></a>
             <a href="perfil.html" class="card-service"><i>👤</i><span>Perfil</span></a>
-            <a href="#" class="card-service"><i>🛍️</i><span>Productos</span></a>
+            <a href="productos.html" class="card-service"><i>🛍️</i><span>Productos</span></a>
             <a href="LaGolondrina.html" class="card-service active-bus">
                 <i>🚌</i><span>Colectivos</span>
             </a>
@@ -141,52 +141,80 @@
         </div>
     </main>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA7FUrAK478GwlfGg-GTU15G683zQ3rWU0",
-            authDomain: "mapa-comarca.firebaseapp.com",
-            projectId: "mapa-comarca",
-            storageBucket: "mapa-comarca.firebasestorage.app",
-            messagingSenderId: "369057855767",
-            appId: "1:369057855767:web:68fa4a6a85e811dc149f52"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyA7FUrAK478GwlfGg-GTU15G683zQ3rWU0",
+        authDomain: "mapa-comarca.firebaseapp.com",
+        projectId: "mapa-comarca",
+        storageBucket: "mapa-comarca.firebasestorage.app",
+        messagingSenderId: "369057855767",
+        appId: "1:369057855767:web:68fa4a6a85e811dc149f52"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
-        const userTag = document.getElementById('user-tag');
+    const userTag = document.getElementById('user-tag');
+    const feed = document.getElementById('feed-mensajes');
+    let currentUser = null;
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                userTag.innerText = user.displayName.toUpperCase();
-            } else {
-                userTag.innerText = "INICIAR SESIÓN";
+    // --- LÓGICA DE ESTADO DE SESIÓN ---
+    onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        if (user) {
+            userTag.innerText = user.displayName.toUpperCase();
+        } else {
+            userTag.innerText = "INICIAR SESIÓN";
+        }
+    });
+
+    // --- LÓGICA DE PROTECCIÓN DE RUTAS ---
+    document.querySelectorAll('.card-service').forEach(link => {
+        link.onclick = (e) => {
+            const destino = link.getAttribute('href');
+            
+            // Si el link va a chat o perfil y NO hay usuario
+            if ((destino === "chat.html" || destino === "perfil.html") && !currentUser) {
+                e.preventDefault(); // Evita que el navegador cambie de página
+                
+                // Animación visual y mensaje en el feed inferior
+                feed.style.color = "#ff4757"; // Rojo suave para error
+                feed.innerHTML = "⚠️ ACCESO DENEGADO: Inicia sesión arriba a la derecha para entrar.";
+                
+                // Resaltamos el botón de login para guiar al usuario
+                userTag.style.boxShadow = "0 0 15px #e67e22";
+                setTimeout(() => userTag.style.boxShadow = "none", 2000);
             }
-        });
-
-        userTag.onclick = async () => {
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                console.error(error);
-                alert("Error al conectar con Google. Revisa si autorizaste el dominio en la consola.");
-            }
         };
+    });
 
-        const q = query(collection(db, "mensajes"), orderBy("tiempo", "desc"), limit(1));
-        onSnapshot(q, (snapshot) => {
-            const feed = document.getElementById('feed-mensajes');
-            snapshot.forEach(doc => {
-                const data = doc.data();
+    // --- LOGIN ---
+    userTag.onclick = async () => {
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error(error);
+            alert("Error al conectar con Google.");
+        }
+    };
+
+    // --- FEED DE MENSAJES ---
+    const q = query(collection(db, "mensajes"), orderBy("tiempo", "desc"), limit(1));
+    onSnapshot(q, (snapshot) => {
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            // Solo actualiza si no hay un mensaje de advertencia activo
+            if (!feed.innerHTML.includes("ACCESO DENEGADO")) {
                 feed.innerHTML = `<span style="color: var(--acento)">ÚLTIMO AVISO:</span> ${data.nombre}: ${data.texto}`;
-            });
+            }
         });
-    </script>
+    });
+</script>
 </body>
 </html>

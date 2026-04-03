@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Panel de Carga</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --glass: rgba(255, 255, 255, 0.15);
+            --blur: blur(20px);
+            --border: 1px solid rgba(255, 255, 255, 0.2);
+            --acento: #e67e22;
+        }
+
+        body { 
+            margin: 0; 
+            font-family: 'Poppins', sans-serif; 
+            min-height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                        url('El-Bolson-Ph_-M.-Luz-Cardozo.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .admin-card {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            padding: 30px;
+            border-radius: 28px;
+            border: var(--border);
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        h3 { margin-top: 0; text-align: center; letter-spacing: 1px; }
+
+        .input-group { margin-bottom: 15px; }
+
+        label { display: block; font-size: 12px; margin-bottom: 5px; opacity: 0.8; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            border: var(--border);
+            border-radius: 12px;
+            color: white;
+            font-family: inherit;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--acento); }
+
+        #btnSubir {
+            width: 100%;
+            padding: 15px;
+            background: var(--acento);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        #btnSubir:active { transform: scale(0.95); }
+
+        .btn-back {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: white;
+            text-decoration: none;
+            font-size: 12px;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-card">
+    <h3>NUEO PRODUCTO</h3>
+    
+    <div class="input-group">
+        <label>Nombre del Producto</label>
+        <input type="text" id="prodNombre" placeholder="Ej: Dulce de Murra">
+    </div>
+
+    <div class="input-group">
+        <label>Precio ($)</label>
+        <input type="number" id="prodPrecio" placeholder="0.00">
+    </div>
+
+    <div class="input-group">
+        <label>URL de la Imagen</label>
+        <input type="text" id="prodImagen" placeholder="https://link-de-la-foto.jpg">
+    </div>
+
+    <div class="input-group">
+        <label>WhatsApp del Vendedor (Sin + ni espacios)</label>
+        <input type="number" id="prodWhatsapp" placeholder="5492944123456">
+    </div>
+
+    <button id="btnSubir">Publicar en la Comarca</button>
+    <a href="productos.html" class="btn-back">Ver Mercado</a>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    
+    // USAMOS TU CONFIGURACIÓN EXISTENTE
+    const firebaseConfig = {
+        apiKey: "AIzaSyA7FUrAK478GwlfGg-GTU15G683zQ3rWU0",
+        authDomain: "mapa-comarca.firebaseapp.com",
+        projectId: "mapa-comarca",
+        storageBucket: "mapa-comarca.firebasestorage.app",
+        messagingSenderId: "369057855767",
+        appId: "1:369057855767:web:68fa4a6a85e811dc149f52"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    document.getElementById('btnSubir').onclick = async () => {
+        const nombre = document.getElementById('prodNombre').value;
+        const precio = Number(document.getElementById('prodPrecio').value);
+        const imagen = document.getElementById('prodImagen').value;
+        const whatsapp = document.getElementById('prodWhatsapp').value;
+
+        if(!nombre || !precio || !whatsapp) {
+            alert("Por favor completa los campos principales.");
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, "productos"), {
+                nombre: nombre,
+                precio: precio,
+                imagen: imagen || 'https://via.placeholder.com/150',
+                whatsapp: whatsapp,
+                tiempo: new Date()
+            });
+            alert("¡Producto subido con éxito!");
+            // Limpiar campos
+            document.querySelectorAll('input').forEach(i => i.value = "");
+        } catch (e) {
+            console.error("Error al subir: ", e);
+            alert("Error al conectar con la base de datos.");
+        }
+    };
+</script>
+
+</body>
+</html>
