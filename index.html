@@ -74,23 +74,13 @@
 
         .card-service:active { transform: scale(0.95); background: rgba(255,255,255,0.3); }
         
-        .card-service i { 
-            font-size: 32px; 
-            margin-bottom: 8px; 
-            font-style: normal;
-        }
+        .card-service i { font-size: 32px; margin-bottom: 8px; font-style: normal; }
         
         .card-service span { 
             font-size: 12px; 
             font-weight: 600; 
             text-transform: uppercase; 
             letter-spacing: 1px;
-        }
-
-        .card-service.active-bus {
-            background: var(--acento);
-            border: none;
-            box-shadow: 0 10px 20px rgba(230, 126, 34, 0.3);
         }
 
         .live-feed {
@@ -114,7 +104,60 @@
             transition: 0.3s;
         }
 
-        #user-tag:hover { background: rgba(255,255,255,0.3); }
+        /* --- ESTILOS DEL MODAL EMERGENTE --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            display: none; /* Oculto por defecto */
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            padding: 30px;
+            border-radius: 30px;
+            border: var(--border);
+            max-width: 300px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h3 { color: var(--acento); margin-top: 0; }
+        .modal-content p { font-size: 14px; opacity: 0.9; margin-bottom: 20px; }
+
+        .btn-modal-login {
+            background: var(--acento);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .btn-close-modal {
+            background: transparent;
+            color: white;
+            border: none;
+            margin-top: 10px;
+            font-size: 11px;
+            text-decoration: underline;
+            cursor: pointer;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
@@ -129,9 +172,7 @@
         <a href="chat.html" class="card-service"><i>💬</i><span>Social</span></a>
         <a href="perfil.html" class="card-service"><i>👤</i><span>Perfil</span></a>
         <a href="productos.html" class="card-service"><i>🛍️</i><span>Productos</span></a>
-        <a href="LaGolondrina.html" class="card-service active-bus">
-            <i>🚌</i><span>Colectivos</span>
-        </a>
+        <a href="LaGolondrina.html" class="card-service"><i>🚌</i><span>Colectivos</span></a>
         <a href="eventos.html" class="card-service"><i>📅</i><span>Eventos</span></a>
         <a href="literatura.html" class="card-service"><i>📖</i><span>Literatura Local</span></a>
     </div>
@@ -140,6 +181,16 @@
         Buscando señales en el Paralelo 42...
     </div>
 </main>
+
+<div class="modal-overlay" id="login-modal">
+    <div class="modal-content">
+        <h3>ACCESO RESTRINGIDO</h3>
+        <p>Para entrar a la zona social o ver tu perfil, primero debes iniciar sesión.</p>
+        <button class="btn-modal-login" id="modal-login-btn">INICIAR SESIÓN AHORA</button>
+        <br>
+        <button class="btn-close-modal" onclick="closeModal()">CERRAR</button>
+    </div>
+</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -162,40 +213,37 @@
 
     const userTag = document.getElementById('user-tag');
     const feed = document.getElementById('feed-mensajes');
+    const loginModal = document.getElementById('login-modal');
+    const modalLoginBtn = document.getElementById('modal-login-btn');
     let currentUser = null;
+
+    // --- FUNCIÓN PARA ABRIR/CERRAR MODAL ---
+    window.closeModal = () => { loginModal.style.display = 'none'; };
 
     // --- LÓGICA DE ESTADO DE SESIÓN ---
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
         if (user) {
             userTag.innerText = user.displayName.toUpperCase();
+            closeModal(); // Si se loguea desde el modal, que se cierre
         } else {
             userTag.innerText = "INICIAR SESIÓN";
         }
     });
 
-    // --- LÓGICA DE PROTECCIÓN DE RUTAS ---
+    // --- PROTECCIÓN DE RUTAS CON MODAL ---
     document.querySelectorAll('.card-service').forEach(link => {
         link.onclick = (e) => {
             const destino = link.getAttribute('href');
-            
-            // Si el link va a chat o perfil y NO hay usuario
             if ((destino === "chat.html" || destino === "perfil.html") && !currentUser) {
-                e.preventDefault(); // Evita que el navegador cambie de página
-                
-                // Animación visual y mensaje en el feed inferior
-                feed.style.color = "#ff4757"; // Rojo suave para error
-                feed.innerHTML = "⚠️ ACCESO DENEGADO: Inicia sesión arriba a la derecha para entrar.";
-                
-                // Resaltamos el botón de login para guiar al usuario
-                userTag.style.boxShadow = "0 0 15px #e67e22";
-                setTimeout(() => userTag.style.boxShadow = "none", 2000);
+                e.preventDefault();
+                loginModal.style.display = 'flex'; // Mostramos el modal
             }
         };
     });
 
-    // --- LOGIN ---
-    userTag.onclick = async () => {
+    // --- LOGIN (Compartido por Header y Modal) ---
+    const iniciarSesion = async () => {
         try {
             await signInWithPopup(auth, provider);
         } catch (error) {
@@ -204,15 +252,15 @@
         }
     };
 
+    userTag.onclick = iniciarSesion;
+    modalLoginBtn.onclick = iniciarSesion;
+
     // --- FEED DE MENSAJES ---
     const q = query(collection(db, "mensajes"), orderBy("tiempo", "desc"), limit(1));
     onSnapshot(q, (snapshot) => {
         snapshot.forEach(doc => {
             const data = doc.data();
-            // Solo actualiza si no hay un mensaje de advertencia activo
-            if (!feed.innerHTML.includes("ACCESO DENEGADO")) {
-                feed.innerHTML = `<span style="color: var(--acento)">ÚLTIMO AVISO:</span> ${data.nombre}: ${data.texto}`;
-            }
+            feed.innerHTML = `<span style="color: var(--acento)">ÚLTIMO AVISO:</span> ${data.nombre}: ${data.texto}`;
         });
     });
 </script>
