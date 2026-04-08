@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker GPS - Superusuario</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --glass: rgba(255, 255, 255, 0.12);
+            --blur: blur(25px);
+            --border: 1px solid rgba(255, 255, 255, 0.2);
+            --acento: #e67e22;
+            --danger: #ff4757;
+            --success: #2ed573;
+        }
+
+        body { 
+            margin: 0; 
+            font-family: 'Poppins', sans-serif; 
+            height: 100vh;
+            background: #121212;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tracker-card {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            padding: 30px;
+            border-radius: 30px;
+            border: var(--border);
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: gray;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-active { background: var(--success); box-shadow: 0 0 10px var(--success); }
+
+        .btn-toggle {
+            width: 100%;
+            padding: 15px;
+            border-radius: 20px;
+            border: none;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+
+        .btn-start { background: var(--acento); color: white; }
+        .btn-stop { background: var(--danger); color: white; }
+
+        .coord-box {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .btn-volver {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="btn-volver">← VOLVER</a>
+
+    <div class="tracker-card">
+        <h2 style="margin-top:0">🛰️ GPS Tracker</h2>
+        <div id="status-container">
+            <span id="dot" class="status-dot"></span>
+            <span id="status-text" style="font-size: 12px; font-weight: 600;">SISTEMA APAGADO</span>
+        </div>
+
+        <div class="coord-box">
+            Lat: <span id="lat">--</span><br>
+            Lon: <span id="lon">--</span>
+        </div>
+
+        <button id="btn-action" class="btn-toggle btn-start">Iniciar Recorrido</button>
+        <p style="font-size: 10px; margin-top: 15px; opacity: 0.6;">Frecuencia de registro: 5 segundos</p>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA7FUrAK478GwlfGg-GTU15G683zQ3rWU0",
+        authDomain: "mapa-comarca.firebaseapp.com",
+        projectId: "mapa-comarca",
+        storageBucket: "mapa-comarca.firebasestorage.app",
+        messagingSenderId: "369057855767",
+        appId: "1:369057855767:web:68fa4a6a85e811dc149f52"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const btnAction = document.getElementById('btn-action');
+    const statusText = document.getElementById('status-text');
+    const statusDot = document.getElementById('dot');
+    const latDisplay = document.getElementById('lat');
+    const lonDisplay = document.getElementById('lon');
+
+    let trackingInterval = null;
+    let isTracking = false;
+    let wakeLock = null;
+
+    // Función para evitar que la pantalla se apague
+    async function requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+            }
+        } catch (err) {
+            console.warn("No se pudo activar el WakeLock");
+        }
+    }
+
+    async function logLocation(position) {
+        const { latitude, longitude } = position.coords;
+        latDisplay.innerText = latitude.toFixed(6);
+        lonDisplay.innerText = longitude.toFixed(6);
+
+        try {
+            await addDoc(collection(db, "gps_tracker"), {
+                lat: latitude,
+                lon: longitude,
+                timestamp: serverTimestamp(),
+                recorrido_id: "linea_golondrina_01"
+            });
+        } catch (e) {
+            console.error("Error Firebase:", e);
+        }
+    }
+
+    function handleError(error) {
+        if (error.code === 1) { // User denied Geolocation
+            alert("⚠️ PERMISO DENEGADO: Por favor, habilita la ubicación en los ajustes de tu navegador (clic en el candado de la barra de direcciones).");
+        } else {
+            alert("Error de GPS: " + error.message);
+        }
+        stopTracking();
+    }
+
+    function startTracking() {
+        if (!navigator.geolocation) {
+            alert("Tu navegador no soporta GPS");
+            return;
+        }
+
+        isTracking = true;
+        btnAction.innerText = "Detener Recorrido";
+        btnAction.classList.replace('btn-start', 'btn-stop');
+        statusText.innerText = "TRANSMITIENDO EN VIVO";
+        statusDot.classList.add('status-active');
+
+        // Activar WakeLock para que no se apague la pantalla
+        requestWakeLock();
+
+        // Primera captura
+        navigator.geolocation.getCurrentPosition(logLocation, handleError, { enableHighAccuracy: true });
+        
+        // Intervalo cada 5s
+        trackingInterval = setInterval(() => {
+            navigator.geolocation.getCurrentPosition(logLocation, handleError, {
+                enableHighAccuracy: true,
+                timeout: 4500 // Evita que las peticiones se acumulen
+            });
+        }, 5000);
+    }
+
+    function stopTracking() {
+        isTracking = false;
+        clearInterval(trackingInterval);
+        if (wakeLock) {
+            wakeLock.release();
+            wakeLock = null;
+        }
+        btnAction.innerText = "Iniciar Recorrido";
+        btnAction.classList.replace('btn-stop', 'btn-start');
+        statusText.innerText = "SISTEMA APAGADO";
+        statusDot.classList.remove('status-active');
+    }
+
+    btnAction.onclick = () => {
+        if (!isTracking) startTracking();
+        else stopTracking();
+    };
+</script>
+</body>
+</html>
